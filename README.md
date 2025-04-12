@@ -1,8 +1,10 @@
 # Goblin Forge
 
+<img src="frontend/public/goblin-logo.png" width="200" height="200" />
+
+
 A Python-based web application designed to simplify executing CLI binaries through an intuitive, visually appealing, and menu-driven web interface.
 
-![Goblin Forge Logo](https://example.com/goblin-forge-logo.png)
 
 ## Overview
 
