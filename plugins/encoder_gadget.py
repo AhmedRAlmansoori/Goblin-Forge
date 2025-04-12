@@ -17,6 +17,7 @@ class EncoderGadget(BaseGadget):
     name = "Encoder & Decoder"
     description = "Encodes and decodes text in various formats"
     tab_id = "encoder"
+    # This gadget doesn't use an external binary, so we don't set binary_name
     
     def get_modes(self):
         """Return available encoding/decoding modes"""

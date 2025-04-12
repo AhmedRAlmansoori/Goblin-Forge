@@ -19,6 +19,7 @@ class ScannerGadget(BaseGadget):
     name = "Network Scanner"
     description = "Scans networks and hosts for open ports and services"
     tab_id = "scanner"
+    binary_name = "nmap"  # Executable name (will search in PATH)
     
     def get_modes(self):
         """Return available scanning modes"""
@@ -152,7 +153,8 @@ class ScannerGadget(BaseGadget):
         
         # Build command based on mode and parameters
         target = params.get("target", "localhost")
-        cmd = ["nmap"]  # We're simulating nmap execution
+        nmap_path = self.get_binary_path()
+        cmd = [nmap_path]  # Use the validated binary path
         
         if mode == "quick_scan":
             cmd.extend(["-F", target])
@@ -173,57 +175,67 @@ class ScannerGadget(BaseGadget):
             cmd.extend(["-O", target])
         elif mode == "custom_scan":
             custom_args = params.get("custom_args", "")
-            cmd = ["nmap"] + custom_args.split() + [target]
-        
-        # For demo purposes, we'll simulate running the command
-        # In a real implementation, you'd use subprocess.run
-        output_file = result_dir / "scan_results.txt"
+            cmd = [nmap_path] + custom_args.split() + [target]
         
         # Log the command
         logger.info(f"Executing scan command: {' '.join(cmd)}")
         
-        # Simulate processing time
-        await asyncio.sleep(2)
+        output_file = result_dir / "scan_results.txt"
+        error_file = result_dir / "scan_errors.txt"
         
-        # Write simulated output
-        with open(output_file, 'w') as f:
-            f.write(f"# Scan Results for {target}\n")
-            f.write(f"# Command: {' '.join(cmd)}\n")
-            f.write(f"# Mode: {mode}\n\n")
+        try:
+            # Execute nmap command with actual binary
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
             
-            if mode == "quick_scan":
-                f.write("PORT   STATE SERVICE\n")
-                f.write("22/tcp open  ssh\n")
-                f.write("80/tcp open  http\n")
-            elif mode == "full_scan":
-                f.write("PORT   STATE SERVICE VERSION\n")
-                f.write("22/tcp open  ssh     OpenSSH 8.2p1\n")
-                f.write("80/tcp open  http    Apache httpd 2.4.41\n")
-            elif mode == "vuln_scan":
-                f.write("PORT   STATE SERVICE VULNERABILITY\n")
-                f.write("80/tcp open  http    CVE-2021-1234 - Example vulnerability\n")
-            else:
-                f.write(f"Simulated output for {mode} scan\n")
-                f.write("This is a placeholder for actual scanner output\n")
-        
-        # Create a summary file
-        summary_file = result_dir / "summary.json"
-        with open(summary_file, 'w') as f:
-            json.dump({
-                "target": target,
+            stdout, stderr = await process.communicate()
+            
+            # Write output to file
+            with open(output_file, 'wb') as f:
+                f.write(stdout)
+            
+            if stderr:
+                with open(error_file, 'wb') as f:
+                    f.write(stderr)
+            
+            # Create a summary file
+            summary_file = result_dir / "summary.json"
+            with open(summary_file, 'w') as f:
+                json.dump({
+                    "target": target,
+                    "command": " ".join(cmd),
+                    "mode": mode,
+                    "status": "completed" if process.returncode == 0 else "error",
+                    "return_code": process.returncode,
+                    "result_files": [
+                        {"name": "scan_results.txt", "path": str(output_file)}
+                    ]
+                }, f, indent=2)
+            
+            return {
+                "status": "completed" if process.returncode == 0 else "error",
+                "result_file": str(output_file),
                 "command": " ".join(cmd),
-                "mode": mode,
-                "status": "completed",
-                "result_files": [
-                    {"name": "scan_results.txt", "path": str(output_file)}
-                ]
-            }, f, indent=2)
-        
-        return {
-            "status": "completed",
-            "result_file": str(output_file),
-            "command": " ".join(cmd)
-        }
+                "return_code": process.returncode
+            }
+            
+        except Exception as e:
+            # Handle execution errors
+            error_msg = f"Error executing scan: {str(e)}"
+            logger.error(error_msg)
+            
+            # Write error to file
+            with open(error_file, 'w') as f:
+                f.write(error_msg)
+            
+            return {
+                "status": "error",
+                "error": error_msg,
+                "command": " ".join(cmd)
+            }
 
     # Optional method to provide a summary of results
     async def summarize_results(self, result_dir):
