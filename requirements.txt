@@ -1,0 +1,15 @@
+# Backend dependencies
+fastapi>=0.104.0
+uvicorn>=0.23.2
+pydantic>=2.4.2
+celery>=5.3.4
+redis>=5.0.1
+python-multipart>=0.0.6
+httpx>=0.25.0
+asyncio>=3.4.3
+
+# Testing
+pytest>=7.4.2
+pytest-asyncio>=0.21.1
+httpx>=0.25.0
+pytest-cov>=4.1.0
