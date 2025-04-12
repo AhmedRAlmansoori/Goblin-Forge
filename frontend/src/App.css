@@ -1,78 +1,128 @@
+/* App.css */
 /* App styling */
 .goblin-forge {
-    min-height: 100vh;
-    display: flex;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.goblin-logo {
+  font-size: 2.5rem;
+  margin-right: 15px;
+}
+
+.app-footer {
+  margin-top: auto;
+}
+
+/* Gadget panel styling */
+.gadget-container {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.gadget-panel {
+  padding: 20px;
+}
+
+.mode-item {
+  transition: background-color 0.2s;
+}
+
+.mode-item:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.mode-parameters {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 3px solid #6c757d;
+}
+
+/* Status indicators */
+.minion-status-bar {
+  background-color: #f8f9fa;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.status-indicators .badge {
+  font-weight: normal;
+  font-size: 0.85rem;
+}
+
+/* Results panel */
+.result-dirs {
+  font-family: monospace;
+  background-color: #f8f9fa;
+  padding: 8px;
+  border-radius: 4px;
+  margin-top: 5px;
+}
+
+/* Dashboard styling */
+.dashboard-card {
+  transition: all 0.2s ease-in-out;
+  margin-bottom: 1rem;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.metric-card {
+  border-radius: 8px;
+  overflow: hidden;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.metric-card .card-body {
+  padding: 1.25rem;
+}
+
+.dashboard-table {
+  font-size: 0.9rem;
+}
+
+.dashboard-table th {
+  font-weight: 600;
+  color: #495057;
+}
+
+.task-list-item {
+  transition: background-color 0.15s;
+}
+
+.task-list-item:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Action buttons */
+.action-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.action-btn + .action-btn {
+  margin-left: 0.25rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .row {
     flex-direction: column;
   }
   
-  .app-header {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  .col-md-7, .col-md-5 {
+    width: 100%;
   }
-  
-  .goblin-logo {
-    font-size: 2.5rem;
-    margin-right: 15px;
-  }
-  
-  .app-footer {
-    margin-top: auto;
-  }
-  
-  /* Gadget panel styling */
-  .gadget-container {
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  }
-  
-  .gadget-panel {
-    padding: 20px;
-  }
-  
-  .mode-item {
-    transition: background-color 0.2s;
-  }
-  
-  .mode-item:hover {
-    background-color: rgba(0, 0, 0, 0.02);
-  }
-  
-  .mode-parameters {
-    background-color: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    border-left: 3px solid #6c757d;
-  }
-  
-  /* Status indicators */
-  .minion-status-bar {
-    background-color: #f8f9fa;
-    padding: 12px 16px;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-  
-  .status-indicators .badge {
-    font-weight: normal;
-    font-size: 0.85rem;
-  }
-  
-  /* Results panel */
-  .result-dirs {
-    font-family: monospace;
-    background-color: #f8f9fa;
-    padding: 8px;
-    border-radius: 4px;
-    margin-top: 5px;
-  }
-  
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .row {
-      flex-direction: column;
-    }
-    
-    .col-md-7, .col-md-5 {
-      width: 100%;
-    }
-  }
+}

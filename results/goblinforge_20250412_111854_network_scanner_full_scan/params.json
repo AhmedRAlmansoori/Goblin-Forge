@@ -1,0 +1,7 @@
+{
+  "mode": "full_scan",
+  "params": {
+    "target": "127.0.0.1",
+    "port_range": "1-60000"
+  }
+}

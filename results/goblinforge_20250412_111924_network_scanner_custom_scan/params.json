@@ -1,0 +1,7 @@
+{
+  "mode": "custom_scan",
+  "params": {
+    "target": "example.com",
+    "custom_args": "-Pn --open -n "
+  }
+}

@@ -8,6 +8,7 @@ COPY frontend/package.json frontend/package-lock.json /app/frontend/
 # Install Node.js dependencies
 WORKDIR /app/frontend
 RUN npm install
+RUN npm install bootstrap-icons
 
 # Copy the rest of the frontend code
 COPY frontend/ /app/frontend/

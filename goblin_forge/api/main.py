@@ -134,3 +134,45 @@ async def cleanup_results():
     """Manually trigger cleanup of old results"""
     minion_manager.cleanup_old_results()
     return {"status": "Cleanup completed"}
+
+
+
+@app.get("/api/completed_tasks", response_model=List[dict])
+async def get_completed_tasks(limit: int = 50):
+    """Get recently completed tasks with their results"""
+    return minion_manager.get_completed_tasks(limit)
+
+@app.get("/api/pending_tasks", response_model=List[dict])
+async def get_pending_tasks():
+    """Get currently pending tasks"""
+    return minion_manager.get_pending_tasks()
+
+@app.get("/api/minion_metrics", response_model=dict)
+async def get_minion_metrics():
+    """Get system metrics for minions"""
+    return minion_manager.get_minion_metrics()
+
+@app.post("/api/cancel_task/{task_id}", response_model=dict)
+async def cancel_task(task_id: str):
+    """Cancel a running task"""
+    return minion_manager.cancel_task(task_id)
+
+@app.post("/api/retry_task/{task_id}", response_model=dict)
+async def retry_task(task_id: str):
+    """Retry a failed task"""
+    return minion_manager.retry_task(task_id)
+
+@app.post("/api/pause_minion/{minion_id}", response_model=dict)
+async def pause_minion(minion_id: str):
+    """Pause a minion to prevent it from taking new tasks"""
+    return minion_manager.pause_minion(minion_id)
+
+@app.post("/api/resume_minion/{minion_id}", response_model=dict)
+async def resume_minion(minion_id: str):
+    """Resume a paused minion"""
+    return minion_manager.resume_minion(minion_id)
+
+@app.get("/api/task_details/{task_id}", response_model=dict)
+async def get_task_details(task_id: str):
+    """Get detailed information about a task"""
+    return minion_manager.get_task_details(task_id)

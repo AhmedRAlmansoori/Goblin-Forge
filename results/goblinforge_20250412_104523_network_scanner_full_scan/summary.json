@@ -1,0 +1,13 @@
+{
+  "target": "example.com",
+  "command": "/usr/bin/nmap -p 1-1000 -sV example.com",
+  "mode": "full_scan",
+  "status": "completed",
+  "return_code": 0,
+  "result_files": [
+    {
+      "name": "scan_results.txt",
+      "path": "results/goblinforge_20250412_104523_network_scanner_full_scan/scan_results.txt"
+    }
+  ]
+}

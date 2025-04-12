@@ -1,0 +1,13 @@
+{
+  "target": "127.0.0.1",
+  "command": "/usr/bin/nmap -p 1-60000 -sV 127.0.0.1",
+  "mode": "full_scan",
+  "status": "completed",
+  "return_code": 0,
+  "result_files": [
+    {
+      "name": "scan_results.txt",
+      "path": "results/goblinforge_20250412_111854_network_scanner_full_scan/scan_results.txt"
+    }
+  ]
+}

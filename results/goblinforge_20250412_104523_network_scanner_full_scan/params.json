@@ -1,0 +1,6 @@
+{
+  "mode": "full_scan",
+  "params": {
+    "target": "example.com"
+  }
+}
