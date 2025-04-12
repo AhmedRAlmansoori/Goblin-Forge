@@ -151,6 +151,171 @@ npm start
 
 The application will be available at http://localhost:3000
 
+## Docker Deployment (Quick Setup)
+
+If you want to quickly test Goblin Forge without installing all the required dependencies, you can use Docker. This is especially useful for Windows users.
+
+### Prerequisites
+
+- Docker Desktop (for Windows/Mac) or Docker Engine (for Linux)
+- VSCode with Docker extension (recommended but optional)
+
+### Setup Steps
+
+1. **Create Docker configuration files in your project root:**
+
+   Create `docker-compose.yml`:
+   ```yaml
+   version: '3.8'
+
+   services:
+     # Redis service for Celery task queue
+     redis:
+       image: redis:alpine
+       ports:
+         - "6379:6379"
+       networks:
+         - goblin-network
+
+     # Backend API service
+     backend:
+       build:
+         context: .
+         dockerfile: Dockerfile.backend
+       ports:
+         - "8000:8000"
+       volumes:
+         - ./:/app
+         - ./results:/app/results
+       depends_on:
+         - redis
+       networks:
+         - goblin-network
+       environment:
+         - REDIS_URL=redis://redis:6379/0
+         - PYTHONPATH=/app
+
+     # Celery worker service
+     worker:
+       build:
+         context: .
+         dockerfile: Dockerfile.backend
+       command: celery -A goblin_forge.core.minion_manager.celery_app worker --loglevel=info
+       volumes:
+         - ./:/app
+         - ./results:/app/results
+       depends_on:
+         - redis
+         - backend
+       networks:
+         - goblin-network
+       environment:
+         - REDIS_URL=redis://redis:6379/0
+         - PYTHONPATH=/app
+
+     # Frontend service
+     frontend:
+       build:
+         context: .
+         dockerfile: Dockerfile.frontend
+       ports:
+         - "3000:3000"
+       volumes:
+         - ./frontend:/app/frontend
+       depends_on:
+         - backend
+       networks:
+         - goblin-network
+
+   networks:
+     goblin-network:
+       driver: bridge
+   ```
+
+   Create `Dockerfile.backend`:
+   ```dockerfile
+   FROM python:3.9-slim
+
+   WORKDIR /app
+
+   # Install system dependencies
+   RUN apt-get update && apt-get install -y \
+       nmap \
+       && rm -rf /var/lib/apt/lists/*
+
+   # Copy requirements
+   COPY requirements.txt /app/
+
+   # Install Python dependencies
+   RUN pip install --no-cache-dir -r requirements.txt
+
+   # Copy the application
+   COPY . /app/
+
+   # Run FastAPI application
+   CMD ["uvicorn", "goblin_forge.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+   ```
+
+   Create `Dockerfile.frontend`:
+   ```dockerfile
+   FROM node:16-alpine
+
+   WORKDIR /app
+
+   # Copy package files
+   COPY frontend/package.json frontend/package-lock.json /app/frontend/
+
+   # Install Node.js dependencies
+   WORKDIR /app/frontend
+   RUN npm install
+
+   # Copy the rest of the frontend code
+   COPY frontend/ /app/frontend/
+
+   # Set working directory to the frontend directory
+   WORKDIR /app/frontend
+
+   # Start the development server
+   CMD ["npm", "start"]
+   ```
+
+2. **Update your configuration files for Docker:**
+
+   Update `core/minion_manager.py` to use environment variables for Redis:
+   ```python
+   celery_app = Celery('goblin_forge',
+                       broker=os.environ.get('REDIS_URL', 'redis://localhost:6379/0'),
+                       backend=os.environ.get('REDIS_URL', 'redis://localhost:6379/0'))
+   ```
+
+   Update CORS settings in `api/main.py`:
+   ```python
+   app.add_middleware(
+       CORSMiddleware,
+       allow_origins=["http://localhost:3000", "http://frontend:3000"],
+       allow_credentials=True,
+       allow_methods=["*"],
+       allow_headers=["*"],
+   )
+   ```
+
+3. **Build and run with Docker Compose:**
+   ```bash
+   docker-compose up --build
+   ```
+
+4. **Access the application:**
+   - Frontend UI: http://localhost:3000
+   - Backend API: http://localhost:8000/docs
+
+5. **Stop the application when done:**
+   ```bash
+   # Press Ctrl+C in the terminal or run:
+   docker-compose down
+   ```
+
+Using Docker allows you to run the entire application stack without installing Redis, Python dependencies, or Node.js directly on your system. This provides a cleaner testing environment that's closer to production.
+
 ## Usage Guide
 
 1. **Browse Available Gadgets**: When you open the application, you'll see tabs for each available Goblin Gadget.
@@ -180,6 +345,8 @@ class MyGadget(BaseGadget):
     name = "My Awesome Gadget"
     description = "Does something cool"
     tab_id = "my_gadget"
+    binary_name = "mytool"  # Optional: name of binary executable to use
+    binary_path = None      # Optional: specific path to binary
     
     def get_modes(self):
         return [
@@ -210,9 +377,25 @@ class MyGadget(BaseGadget):
     
     async def execute(self, mode, params, result_dir):
         # Implement execution logic
+        # For binary-based gadgets:
+        binary_path = self.get_binary_path()
+        
+        # Example command construction
+        cmd = [binary_path, "--some-flag", params.get("input1")]
+        
+        # Execute command
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        
+        stdout, stderr = await process.communicate()
+        
+        # Write output to result file
         result_file = Path(result_dir) / "output.txt"
-        with open(result_file, 'w') as f:
-            f.write(f"Executed {mode} with params: {params}")
+        with open(result_file, 'wb') as f:
+            f.write(stdout)
         
         return {
             "status": "completed",
@@ -300,6 +483,11 @@ def test_scanner_gadget():
    - Verify the API URL in `frontend/src/App.js` matches your server
    - Check for CORS issues in the browser console
    - Ensure the backend server is running
+
+4. **Docker Issues**
+   - Port conflicts: Check if ports 3000, 6379, or 8000 are already in use
+   - Volume permissions: On Windows, you might need to use Docker's WSL2 backend
+   - Container communication: Ensure containers can reach each other on the network
 
 ## Contributing
 
