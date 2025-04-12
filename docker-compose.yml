@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # Redis service for Celery task queue
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - goblin-network
+
+  # Backend API service
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+      - ./results:/app/results
+    depends_on:
+      - redis
+    networks:
+      - goblin-network
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+
+  # Celery worker service
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    # Try a modified command to ensure the Python path is correct
+    command: bash -c "cd /app && python -m celery -A goblin_forge.core.minion_manager.celery_app worker --loglevel=info"
+    volumes:
+      - ./:/app
+      - ./results:/app/results
+    depends_on:
+      - redis
+      - backend
+    networks:
+      - goblin-network
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+      
+  # Frontend service
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app/frontend
+      - /app/frontend/node_modules  # This prevents local node_modules from being mounted
+    depends_on:
+      - backend
+    networks:
+      - goblin-network
+
+networks:
+  goblin-network:
+    driver: bridge
