@@ -17,7 +17,7 @@ app = FastAPI(
 # Enable CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_origins=["http://localhost:3000","http://frontend:3000"],  # Frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -57,6 +57,8 @@ class GadgetInfo(BaseModel):
 async def get_gadgets():
     """Get all available Goblin Gadgets"""
     gadgets = plugin_loader.discover_gadgets()
+    print(f"API: Returning {len(gadgets)} gadgets")
+
     result = []
     
     for gadget_class in gadgets:
@@ -99,6 +101,12 @@ async def submit_task(task: TaskSubmission):
         params = task.parameters.get(mode, {})
         
         # Submit the task to the minion manager
+        # When calling submit_task, make sure the gadget module is correctly specified
+        gadget_module = gadget.__module__
+        # If the module doesn't already start with goblin_forge, add it
+        if not gadget_module.startswith('goblin_forge.'):
+            gadget_module = f'goblin_forge.{gadget_module}'
+            
         task_info = await minion_manager.submit_task(gadget, mode, params)
         task_ids.append(task_info["task_id"])
         result_dirs.append(task_info["result_dir"])

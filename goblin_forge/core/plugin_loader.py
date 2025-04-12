@@ -17,8 +17,10 @@ class PluginLoader:
         
     def discover_gadgets(self) -> List[Type[BaseGadget]]:
         """Discover all Goblin Gadget plugins in the plugin directory"""
+        print(f"Scanning for gadgets in {self.plugin_dir}")
         # Skip if we're looking at the base module itself
         self._scan_directory(self.plugin_dir)
+        print(f"Found {len(self.gadgets)} gadgets: {list(self.gadgets.keys())}")
         return list(self.gadgets.values())
     
     def _scan_directory(self, directory: Path) -> None:

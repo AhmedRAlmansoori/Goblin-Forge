@@ -5,7 +5,9 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 // Base API URL
-const API_URL = 'http://localhost:8000/api';
+// const API_URL = 'http://localhost:8000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://backend:8000/api';
+
 
 function App() {
   const [gadgets, setGadgets] = useState([]);

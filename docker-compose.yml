@@ -58,6 +58,8 @@ services:
       - /app/frontend/node_modules  # This prevents local node_modules from being mounted
     depends_on:
       - backend
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000/api
     networks:
       - goblin-network
 

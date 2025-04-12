@@ -6,9 +6,13 @@ from celery import Celery
 from pathlib import Path
 
 # Configure Celery
+# celery_app = Celery('goblin_forge',
+#                     broker='redis://localhost:6379/0',
+#                     backend='redis://localhost:6379/0')
+
 celery_app = Celery('goblin_forge',
-                    broker='redis://localhost:6379/0',
-                    backend='redis://localhost:6379/0')
+                     broker=os.environ.get('REDIS_URL', 'redis://localhost:6379/0'),
+                     backend=os.environ.get('REDIS_URL', 'redis://localhost:6379/0'))
 
 # Configure task concurrency
 celery_app.conf.update(
@@ -101,6 +105,10 @@ def execute_gadget_task(gadget_module, gadget_class, mode, params, result_dir):
     """Celery task to execute a gadget in a separate process"""
     try:
         # Dynamically import the gadget module and class
+        # This is the problematic part - it needs to use absolute imports
+        if not gadget_module.startswith('goblin_forge.'):
+            gadget_module = f'goblin_forge.{gadget_module}'
+            
         module = __import__(gadget_module, fromlist=[gadget_class])
         GadgetClass = getattr(module, gadget_class)
         gadget = GadgetClass()
