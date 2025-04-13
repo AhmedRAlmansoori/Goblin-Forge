@@ -70,7 +70,9 @@ function App() {
       <header className="app-header bg-dark text-light py-4">
         <Container>
           <div className="d-flex align-items-center">
-            <div className="goblin-logo me-3">🧙‍♂️</div>
+          <div className="goblin-logo me-3">
+          <img src="/goblin-logo-small.png" alt="Goblin Forge Logo" height="80" />
+        </div>
             <div>
               <h1 className="mb-0">Goblin Forge</h1>
               <p className="mb-0 text-muted">CLI tools with a friendly face</p>
