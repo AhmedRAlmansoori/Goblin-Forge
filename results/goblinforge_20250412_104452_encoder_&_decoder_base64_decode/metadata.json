@@ -1,6 +1,0 @@
-{
-  "mode": "base64_decode",
-  "input_length": 5,
-  "output_length": 77,
-  "error": "Error processing base64_decode: 'utf-8' codec can't decode byte 0x99 in position 0: invalid start byte"
-}

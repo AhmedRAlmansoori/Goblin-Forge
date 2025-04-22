@@ -10,6 +10,7 @@ Goblin Forge's plugin system, known as "Goblin Gadgets," makes it easy to add ne
 4. [Testing Your Gadget](#testing-your-gadget)
 5. [Advanced Features](#advanced-features)
 6. [Troubleshooting](#troubleshooting)
+7. [File Upload Feature](#file-upload-feature)
 
 ## Understanding Goblin Gadgets
 
@@ -770,6 +771,120 @@ for i in range(10):
     
     await asyncio.sleep(1)  # Simulate work
 ```
+
+## File Upload Feature
+
+Goblin Forge supports file uploads as an input type in gadget forms. This allows users to upload files that can be processed by your gadget. Here's how to implement file upload functionality in your gadget:
+
+### 1. Adding File Upload to Form Schema
+
+To add a file upload field to your gadget's form, specify the field type as 'file' in your form schema:
+
+```python
+def get_form_schema(self, mode_id):
+    if mode_id == "your_mode_id":
+        return {
+            "input_file": {
+                "type": "file",
+                "label": "Input File",
+                "description": "Select a file to process",
+                "required": True
+            }
+        }
+```
+
+### 2. Handling Uploaded Files
+
+When a file is uploaded, it is automatically saved to the `results/uploads` directory with a timestamp prefix. The file path is passed to your gadget's `process_task` method in the parameters dictionary:
+
+```python
+async def process_task(self, mode_id, parameters, result_dir):
+    # Get the uploaded file path
+    input_file = parameters.get("input_file")
+    
+    if not input_file or not os.path.exists(input_file):
+        return {"error": "Input file not found"}
+        
+    # Process the file
+    # ...
+```
+
+### 3. Example: File Processor Gadget
+
+Here's a complete example of a gadget that uses file upload:
+
+```python
+from goblin_forge.core.base_gadget import BaseGadget
+import os
+from pathlib import Path
+
+class FileProcessorGadget(BaseGadget):
+    def __init__(self):
+        super().__init__()
+        self.tab_id = "file_processor"
+        self.name = "File Processor"
+        self.description = "Process uploaded files with various operations"
+        
+    def get_modes(self):
+        return [
+            {
+                "id": "file_analyzer",
+                "name": "File Analyzer",
+                "description": "Analyze uploaded files and provide basic information"
+            }
+        ]
+        
+    def get_form_schema(self, mode_id):
+        if mode_id == "file_analyzer":
+            return {
+                "input_file": {
+                    "type": "file",
+                    "label": "Input File",
+                    "description": "Select a file to analyze",
+                    "required": True
+                }
+            }
+        return {}
+        
+    async def process_task(self, mode_id, parameters, result_dir):
+        if mode_id == "file_analyzer":
+            return await self._analyze_file(parameters, result_dir)
+        return {"error": "Invalid mode"}
+        
+    async def _analyze_file(self, parameters, result_dir):
+        input_file = parameters.get("input_file")
+        
+        if not input_file or not os.path.exists(input_file):
+            return {"error": "Input file not found"}
+            
+        file_path = Path(input_file)
+        result = {
+            "filename": file_path.name,
+            "size": os.path.getsize(input_file),
+            "extension": file_path.suffix,
+            "created": os.path.getctime(input_file),
+            "modified": os.path.getmtime(input_file)
+        }
+        
+        # Save the analysis results
+        with open(os.path.join(result_dir, "analysis_results.json"), "w") as f:
+            import json
+            json.dump(result, f, indent=2)
+            
+        return {"status": "success", "message": "File analysis completed"}
+```
+
+### 4. Best Practices
+
+1. **File Validation**: Always validate the uploaded file before processing it. Check if the file exists and has the expected format.
+
+2. **Error Handling**: Implement proper error handling for file operations. Return meaningful error messages if something goes wrong.
+
+3. **Result Storage**: Save your results in the provided `result_dir` directory. This ensures proper cleanup and organization of task outputs.
+
+4. **File Cleanup**: The system automatically handles cleanup of uploaded files after task completion. You don't need to manually delete files.
+
+5. **Security**: Be cautious when processing uploaded files. Validate file types and sizes, and handle potentially malicious content appropriately.
 
 ## Troubleshooting
 

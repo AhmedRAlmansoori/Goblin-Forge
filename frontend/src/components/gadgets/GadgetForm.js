@@ -1,8 +1,40 @@
 // components/gadgets/GadgetForm.js
-import React from 'react';
+import React, { useState } from 'react';
 import { Form } from 'react-bootstrap';
+import axios from 'axios';
 
 function GadgetForm({ gadget, selectedModes, parameters, onModeToggle, onInputChange }) {
+  const [uploadProgress, setUploadProgress] = useState({});
+
+  const handleFileUpload = async (modeId, fieldName, event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await axios.post('http://localhost:8000/api/upload_file', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(prev => ({
+            ...prev,
+            [`${modeId}-${fieldName}`]: percentCompleted
+          }));
+        }
+      });
+
+      // Update the form field with the uploaded file path
+      onInputChange(modeId, fieldName, response.data.file_path);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      // Handle error appropriately
+    }
+  };
+
   return (
     <>
       {gadget.modes.map((mode) => (
@@ -63,6 +95,36 @@ function GadgetForm({ gadget, selectedModes, parameters, onModeToggle, onInputCh
                           }}
                         />
                       ))}
+                    </div>
+                  ) : field.type === 'file' ? (
+                    <div>
+                      <Form.Control
+                        type="file"
+                        onChange={(e) => handleFileUpload(mode.id, fieldName, e)}
+                      />
+                      {uploadProgress[`${mode.id}-${fieldName}`] !== undefined && (
+                        <div className="mt-2">
+                          <div className="progress">
+                            <div 
+                              className="progress-bar" 
+                              role="progressbar" 
+                              style={{ width: `${uploadProgress[`${mode.id}-${fieldName}`]}%` }}
+                              aria-valuenow={uploadProgress[`${mode.id}-${fieldName}`]}
+                              aria-valuemin="0"
+                              aria-valuemax="100"
+                            >
+                              {uploadProgress[`${mode.id}-${fieldName}`]}%
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {(parameters[mode.id] || {})[fieldName] && (
+                        <div className="mt-2">
+                          <small className="text-muted">
+                            File uploaded: {(parameters[mode.id] || {})[fieldName]}
+                          </small>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <Form.Control

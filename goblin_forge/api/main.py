@@ -1,8 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException , UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, List, Any, Optional
 import asyncio
+from pathlib import Path
+import time
+import shutil
 
 from goblin_forge.core.plugin_loader import PluginLoader
 from goblin_forge.core.minion_manager import MinionManager
@@ -176,3 +179,27 @@ async def resume_minion(minion_id: str):
 async def get_task_details(task_id: str):
     """Get detailed information about a task"""
     return minion_manager.get_task_details(task_id)
+
+# Create a temporary directory for uploads
+UPLOAD_DIR = Path("./results/uploads")
+UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
+
+@app.post("/api/upload_file", response_model=dict)
+async def upload_file(file: UploadFile = File(...)):
+    """Upload a file to the results directory"""
+    # Create a unique filename
+    timestamp = int(time.time())
+    temp_filename = f"{timestamp}_{file.filename}"
+    temp_file = UPLOAD_DIR / temp_filename
+    
+    # Save the uploaded file
+    with open(temp_file, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    return {
+        "file_path": str(temp_file),
+        "original_filename": file.filename,
+        "temp_filename": temp_filename,
+        "content_type": file.content_type,
+        "upload_timestamp": timestamp
+    }
