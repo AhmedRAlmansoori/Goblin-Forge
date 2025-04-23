@@ -180,26 +180,27 @@ async def get_task_details(task_id: str):
     """Get detailed information about a task"""
     return minion_manager.get_task_details(task_id)
 
-# Create a temporary directory for uploads
-UPLOAD_DIR = Path("./results/uploads")
-UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
-
 @app.post("/api/upload_file", response_model=dict)
 async def upload_file(file: UploadFile = File(...)):
-    """Upload a file to the results directory"""
-    # Create a unique filename
+    """Upload a file to the task's result directory"""
+    # Create a unique filename with timestamp
     timestamp = int(time.time())
-    temp_filename = f"{timestamp}_{file.filename}"
-    temp_file = UPLOAD_DIR / temp_filename
+    filename = f"{timestamp}_{file.filename}"
+    
+    # Create a temporary result directory for the upload
+    temp_result_dir = Path("./results") / f"temp_upload_{timestamp}"
+    temp_result_dir.mkdir(exist_ok=True, parents=True)
     
     # Save the uploaded file
-    with open(temp_file, "wb") as buffer:
+    file_path = temp_result_dir / filename
+    with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
     return {
-        "file_path": str(temp_file),
+        "file_path": str(file_path),
         "original_filename": file.filename,
-        "temp_filename": temp_filename,
+        "temp_filename": filename,
         "content_type": file.content_type,
-        "upload_timestamp": timestamp
+        "upload_timestamp": timestamp,
+        "temp_result_dir": str(temp_result_dir)
     }

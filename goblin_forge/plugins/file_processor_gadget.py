@@ -80,6 +80,22 @@ class FileProcessorGadget(BaseGadget):
         
     async def execute(self, mode, params, result_dir):
         """Execute file processing operation"""
+        # Move the uploaded file to the task's result directory
+        input_file = params.get("input_file")
+        if input_file:
+            input_path = Path(input_file)
+            if input_path.exists():
+                # Create an 'input' subdirectory in the result directory
+                input_dir = Path(result_dir) / "input"
+                input_dir.mkdir(exist_ok=True)
+                
+                # Copy the file to the input directory
+                new_path = input_dir / input_path.name
+                shutil.copy2(input_file, new_path)
+                
+                # Update the input file path in params
+                params["input_file"] = str(new_path)
+        
         if mode == "file_analyzer":
             return await self._analyze_file(params, result_dir)
         elif mode == "file_converter":
@@ -125,10 +141,14 @@ class FileProcessorGadget(BaseGadget):
         if not input_file or not os.path.exists(input_file):
             return {"error": "Input file not found"}
             
+        # Create an 'output' subdirectory in the result directory
+        output_dir = Path(result_dir) / "output"
+        output_dir.mkdir(exist_ok=True)
+            
         # In a real implementation, you would perform the actual conversion here
         # For this example, we'll just copy the file with a new extension
         input_path = Path(input_file)
-        output_path = Path(result_dir) / f"{input_path.stem}.{output_format}"
+        output_path = output_dir / f"{input_path.stem}.{output_format}"
         
         shutil.copy2(input_file, output_path)
         
